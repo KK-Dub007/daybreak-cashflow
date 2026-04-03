@@ -1,0 +1,1075 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SK Retail | Cashflow Dashboard</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600;700&display=swap');
+
+  :root {
+    --bg: #0a0c10;
+    --surface: #111318;
+    --surface2: #1a1d24;
+    --border: #252830;
+    --accent: #00d4aa;
+    --accent2: #3b82f6;
+    --warn: #f59e0b;
+    --danger: #ef4444;
+    --text: #e8eaf0;
+    --muted: #6b7280;
+    --green: #10b981;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  /* ====== LOGIN ====== */
+  #login-screen {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    background: radial-gradient(ellipse at 30% 20%, #00d4aa12 0%, transparent 60%),
+                radial-gradient(ellipse at 70% 80%, #3b82f614 0%, transparent 60%),
+                var(--bg);
+  }
+  .login-box {
+    width: 380px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 40px;
+  }
+  .login-logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 32px;
+  }
+  .login-logo-icon {
+    width: 40px; height: 40px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+  }
+  .login-logo h1 { font-size: 18px; font-weight: 700; color: var(--text); }
+  .login-logo p { font-size: 11px; color: var(--muted); font-family: 'DM Mono', monospace; }
+  .login-box h2 { font-size: 22px; font-weight: 600; margin-bottom: 8px; }
+  .login-box p.sub { color: var(--muted); font-size: 13px; margin-bottom: 28px; }
+  .form-group { margin-bottom: 20px; }
+  .form-group label { display: block; font-size: 12px; font-weight: 500; color: var(--muted); margin-bottom: 8px; letter-spacing: 0.05em; text-transform: uppercase; }
+  .form-group input {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 16px;
+    font-family: 'DM Mono', monospace;
+    font-size: 14px;
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .form-group input:focus { border-color: var(--accent); }
+  .login-error { color: var(--danger); font-size: 12px; margin-bottom: 16px; display: none; }
+  .btn-primary {
+    width: 100%;
+    background: linear-gradient(135deg, var(--accent), #00b894);
+    color: #0a0c10;
+    border: none;
+    border-radius: 8px;
+    padding: 13px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: opacity 0.2s;
+  }
+  .btn-primary:hover { opacity: 0.88; }
+  .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  /* ====== MAIN APP ====== */
+  #app { display: none; }
+
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 28px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .topbar-left { display: flex; align-items: center; gap: 16px; }
+  .topbar-logo {
+    width: 32px; height: 32px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px;
+  }
+  .topbar h1 { font-size: 15px; font-weight: 700; }
+  .topbar-tag { font-size: 10px; font-family: 'DM Mono', monospace; color: var(--accent); background: #00d4aa12; padding: 3px 8px; border-radius: 4px; border: 1px solid #00d4aa30; }
+  .topbar-right { display: flex; align-items: center; gap: 16px; }
+  .sync-status { font-size: 11px; color: var(--muted); font-family: 'DM Mono', monospace; }
+  .sync-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); display: inline-block; margin-right: 5px; animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+  .btn-sm {
+    padding: 7px 14px;
+    border-radius: 7px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    color: var(--text);
+    transition: all 0.2s;
+  }
+  .btn-sm:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-sm.accent { background: var(--accent); color: #0a0c10; border-color: var(--accent); }
+  .btn-sm.accent:hover { opacity: 0.85; color: #0a0c10; }
+  .btn-sm:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .main { padding: 24px 28px; max-width: 1600px; margin: 0 auto; }
+
+  /* ====== FILTERS ====== */
+  .filters-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px 24px;
+    margin-bottom: 20px;
+  }
+  .filters-title { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 14px; }
+  .stores-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .store-chip {
+    padding: 6px 14px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+    user-select: none;
+  }
+  .store-chip:hover { border-color: var(--accent); color: var(--accent); }
+  .store-chip.selected { background: var(--accent); color: #0a0c10; border-color: var(--accent); font-weight: 700; }
+  .store-chip.all { background: var(--accent2); color: #fff; border-color: var(--accent2); }
+  .filter-actions { display: flex; gap: 8px; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border); }
+
+  /* ====== CASHFLOW BANDS ====== */
+  .bands-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+  .band-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 22px 24px;
+    position: relative;
+    overflow: hidden;
+  }
+  .band-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+  }
+  .band-card.w1-4::before { background: linear-gradient(90deg, var(--danger), #f97316); }
+  .band-card.w5-8::before { background: linear-gradient(90deg, var(--warn), #eab308); }
+  .band-card.w9-12::before { background: linear-gradient(90deg, var(--green), var(--accent)); }
+  .band-label { font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 6px; }
+  .band-card.w1-4 .band-label { color: var(--danger); }
+  .band-card.w5-8 .band-label { color: var(--warn); }
+  .band-card.w9-12 .band-label { color: var(--green); }
+  .band-subtitle { font-size: 11px; color: var(--muted); margin-bottom: 16px; font-family: 'DM Mono', monospace; }
+  .band-amount { font-size: 32px; font-weight: 700; font-family: 'DM Mono', monospace; letter-spacing: -1px; }
+  .band-meta { margin-top: 12px; display: flex; gap: 16px; }
+  .band-meta-item { font-size: 11px; color: var(--muted); }
+  .band-meta-item span { color: var(--text); font-weight: 600; }
+
+  /* ====== INVOICE TABLE ====== */
+  .table-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+  }
+  .table-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 24px;
+    border-bottom: 1px solid var(--border);
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .table-title { font-size: 14px; font-weight: 700; }
+  .table-controls { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .search-input {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    padding: 7px 12px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    color: var(--text);
+    outline: none;
+    width: 200px;
+    transition: border-color 0.2s;
+  }
+  .search-input:focus { border-color: var(--accent); }
+  .search-input::placeholder { color: var(--muted); }
+
+  .doc-type-filter {
+    display: flex;
+    gap: 4px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    padding: 3px;
+  }
+  .doc-type-btn {
+    padding: 4px 10px;
+    border-radius: 5px;
+    border: none;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    background: transparent;
+    color: var(--muted);
+    transition: all 0.15s;
+  }
+  .doc-type-btn.active { background: var(--surface); color: var(--text); }
+
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; }
+  thead th {
+    padding: 10px 16px;
+    text-align: left;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    background: var(--surface2);
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
+  }
+  thead th:hover { color: var(--accent); }
+  thead th .sort-icon { margin-left: 4px; opacity: 0.4; }
+  thead th.sorted .sort-icon { opacity: 1; color: var(--accent); }
+  tbody tr { border-bottom: 1px solid var(--border); transition: background 0.1s; }
+  tbody tr:hover { background: var(--surface2); }
+  tbody tr:last-child { border-bottom: none; }
+  td { padding: 12px 16px; font-size: 13px; white-space: nowrap; }
+  .td-amount { font-family: 'DM Mono', monospace; font-weight: 600; }
+  .td-credit { color: var(--green); }
+  .td-net-negative { color: var(--danger); }
+
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+  .badge-invoice { background: #3b82f620; color: var(--accent2); border: 1px solid #3b82f630; }
+  .badge-credit_note { background: #10b98120; color: var(--green); border: 1px solid #10b98130; }
+  .badge-dd_notification { background: #f59e0b20; color: var(--warn); border: 1px solid #f59e0b30; }
+  .badge-statement { background: #6b728020; color: #9ca3af; border: 1px solid #6b728030; }
+
+  .week-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 700;
+    font-family: 'DM Mono', monospace;
+  }
+  .week-1-4 { background: #ef444420; color: var(--danger); border: 1px solid #ef444430; }
+  .week-5-8 { background: #f59e0b20; color: var(--warn); border: 1px solid #f59e0b30; }
+  .week-9-12 { background: #10b98120; color: var(--green); border: 1px solid #10b98130; }
+  .week-other { background: #6b728020; color: #9ca3af; border: 1px solid #6b728030; }
+
+  .confidence-high { color: var(--green); }
+  .confidence-medium { color: var(--warn); }
+  .confidence-low { color: var(--danger); }
+  .confidence-unknown { color: var(--muted); }
+
+  .table-footer {
+    padding: 14px 24px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12px;
+    color: var(--muted);
+    background: var(--surface2);
+  }
+
+  /* ====== SYNC PANEL ====== */
+  .sync-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px 24px;
+    margin-bottom: 20px;
+    display: none;
+  }
+  .sync-panel.visible { display: block; }
+  .sync-log {
+    background: #0a0c10;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    max-height: 200px;
+    overflow-y: auto;
+    margin-top: 12px;
+  }
+  .sync-log-line { margin-bottom: 4px; }
+  .sync-log-line.ok { color: var(--green); }
+  .sync-log-line.warn { color: var(--warn); }
+  .sync-log-line.err { color: var(--danger); }
+  .sync-progress {
+    height: 4px;
+    background: var(--surface2);
+    border-radius: 2px;
+    margin-top: 12px;
+    overflow: hidden;
+  }
+  .sync-progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    border-radius: 2px;
+    transition: width 0.3s;
+    width: 0%;
+  }
+
+  /* ====== EMPTY STATE ====== */
+  .empty-state {
+    text-align: center;
+    padding: 60px 24px;
+  }
+  .empty-icon { font-size: 40px; margin-bottom: 16px; }
+  .empty-state h3 { font-size: 16px; font-weight: 600; margin-bottom: 8px; }
+  .empty-state p { font-size: 13px; color: var(--muted); max-width: 320px; margin: 0 auto 20px; }
+
+  /* ====== STORE ALIASES PANEL ====== */
+  #aliases-modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: #000000a0;
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+  }
+  #aliases-modal.open { display: flex; }
+  .modal-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 32px;
+    width: 600px;
+    max-height: 80vh;
+    overflow-y: auto;
+  }
+  .modal-box h2 { font-size: 18px; font-weight: 700; margin-bottom: 6px; }
+  .modal-box p.sub { color: var(--muted); font-size: 13px; margin-bottom: 24px; }
+  .alias-group { margin-bottom: 20px; }
+  .alias-group-name { font-size: 12px; font-weight: 700; color: var(--accent); margin-bottom: 8px; }
+  .alias-list { display: flex; flex-wrap: wrap; gap: 6px; }
+  .alias-tag {
+    padding: 4px 10px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    font-size: 11px;
+    font-family: 'DM Mono', monospace;
+    color: var(--muted);
+  }
+  .add-alias-form { display: flex; gap: 8px; margin-top: 8px; }
+  .add-alias-form input {
+    flex: 1;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    padding: 8px 12px;
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    color: var(--text);
+    outline: none;
+  }
+  .add-alias-form input:focus { border-color: var(--accent); }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .bands-grid { grid-template-columns: 1fr; }
+    .main { padding: 16px; }
+    .topbar { padding: 12px 16px; }
+    .band-amount { font-size: 24px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">
+      <div class="login-logo-icon">📊</div>
+      <div>
+        <h1>SK Retail Group</h1>
+        <p>CASHFLOW INTELLIGENCE</p>
+      </div>
+    </div>
+    <h2>Welcome back</h2>
+    <p class="sub">Sign in to access your live cashflow dashboard</p>
+    <div class="form-group">
+      <label>Password</label>
+      <input type="password" id="pw-input" placeholder="Enter dashboard password" onkeydown="if(event.key==='Enter') doLogin()">
+    </div>
+    <div class="login-error" id="login-error">Incorrect password. Please try again.</div>
+    <button class="btn-primary" onclick="doLogin()" id="login-btn">Access Dashboard →</button>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="app">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="topbar-logo">📊</div>
+      <h1>Cashflow Dashboard</h1>
+      <span class="topbar-tag">SK RETAIL GROUP · 10 STORES</span>
+    </div>
+    <div class="topbar-right">
+      <span class="sync-status"><span class="sync-dot"></span><span id="last-sync-text">Never synced</span></span>
+      <button class="btn-sm" onclick="showAliases()">🏷️ Manage Aliases</button>
+      <button class="btn-sm accent" onclick="startSync()" id="sync-btn">⚡ Import Data</button>
+    </div>
+  </div>
+
+  <div class="main">
+
+    <!-- SYNC PANEL -->
+    <div class="sync-panel" id="sync-panel">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div>
+          <div style="font-size:13px;font-weight:700;" id="sync-title">Syncing Gmail inbox...</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:3px;" id="sync-subtitle">Reading supplier emails and extracting payment data</div>
+        </div>
+        <button class="btn-sm" onclick="closeSyncPanel()">✕ Close</button>
+      </div>
+      <div class="sync-progress"><div class="sync-progress-bar" id="sync-bar"></div></div>
+      <div class="sync-log" id="sync-log"></div>
+    </div>
+
+    <!-- STORE FILTER -->
+    <div class="filters-section">
+      <div class="filters-title">Filter by Store</div>
+      <div class="stores-grid" id="stores-grid"></div>
+      <div class="filter-actions">
+        <button class="btn-sm" onclick="selectAllStores()">Select All</button>
+        <button class="btn-sm" onclick="clearStores()">Clear</button>
+        <span style="flex:1"></span>
+        <span style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;" id="selected-stores-label">All stores selected</span>
+      </div>
+    </div>
+
+    <!-- CASHFLOW BANDS -->
+    <div class="bands-grid">
+      <div class="band-card w1-4">
+        <div class="band-label">⚠️ Weeks 1–4</div>
+        <div class="band-subtitle" id="band1-dates">Loading...</div>
+        <div class="band-amount" id="band1-amount">€0.00</div>
+        <div class="band-meta">
+          <div class="band-meta-item"><span id="band1-count">0</span> invoices</div>
+          <div class="band-meta-item"><span id="band1-suppliers">0</span> suppliers</div>
+        </div>
+      </div>
+      <div class="band-card w5-8">
+        <div class="band-label">📅 Weeks 5–8</div>
+        <div class="band-subtitle" id="band2-dates">Loading...</div>
+        <div class="band-amount" id="band2-amount">€0.00</div>
+        <div class="band-meta">
+          <div class="band-meta-item"><span id="band2-count">0</span> invoices</div>
+          <div class="band-meta-item"><span id="band2-suppliers">0</span> suppliers</div>
+        </div>
+      </div>
+      <div class="band-card w9-12">
+        <div class="band-label">🔮 Weeks 9–12</div>
+        <div class="band-subtitle" id="band3-dates">Loading...</div>
+        <div class="band-amount" id="band3-amount">€0.00</div>
+        <div class="band-meta">
+          <div class="band-meta-item"><span id="band3-count">0</span> invoices</div>
+          <div class="band-meta-item"><span id="band3-suppliers">0</span> suppliers</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- INVOICE TABLE -->
+    <div class="table-section">
+      <div class="table-header">
+        <div class="table-title">Invoice Detail</div>
+        <div class="table-controls">
+          <input type="text" class="search-input" id="search-box" placeholder="Search supplier, invoice #..." oninput="applyTableFilters()">
+          <div class="doc-type-filter">
+            <button class="doc-type-btn active" onclick="setDocFilter('all',this)">All</button>
+            <button class="doc-type-btn" onclick="setDocFilter('invoice',this)">Invoices</button>
+            <button class="doc-type-btn" onclick="setDocFilter('credit_note',this)">Credits</button>
+            <button class="doc-type-btn" onclick="setDocFilter('dd_notification',this)">DDs</button>
+          </div>
+          <button class="btn-sm" onclick="exportCSV()">⬇️ Export CSV</button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th onclick="sortTable('store_name')">Store <span class="sort-icon">↕</span></th>
+              <th onclick="sortTable('supplier')">Supplier <span class="sort-icon">↕</span></th>
+              <th onclick="sortTable('invoice_number')">Invoice # <span class="sort-icon">↕</span></th>
+              <th onclick="sortTable('document_type')">Type <span class="sort-icon">↕</span></th>
+              <th onclick="sortTable('due_date')">Due Date <span class="sort-icon">↕</span></th>
+              <th onclick="sortTable('week_band')">Week Band <span class="sort-icon">↕</span></th>
+              <th onclick="sortTable('amount')" style="text-align:right">Amount <span class="sort-icon">↕</span></th>
+              <th onclick="sortTable('credit_amount')" style="text-align:right">Credit <span class="sort-icon">↕</span></th>
+              <th onclick="sortTable('net')" style="text-align:right">Net Due <span class="sort-icon">↕</span></th>
+              <th>Confidence</th>
+            </tr>
+          </thead>
+          <tbody id="invoice-tbody"></tbody>
+        </table>
+      </div>
+      <div class="table-footer">
+        <span id="table-count">0 records shown</span>
+        <span id="table-total" style="font-family:'DM Mono',monospace;font-weight:600;"></span>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ALIASES MODAL -->
+<div id="aliases-modal">
+  <div class="modal-box">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;">
+      <h2>🏷️ Store Identity Map</h2>
+      <button class="btn-sm" onclick="closeAliases()">✕ Close</button>
+    </div>
+    <p class="sub">These aliases help the AI match supplier emails to the correct store. Add old trading names, addresses, or supplier account codes.</p>
+    <div id="aliases-content">Loading...</div>
+  </div>
+</div>
+
+<script>
+// ============================================
+// CONFIG — Supabase
+// ============================================
+const SUPABASE_URL = 'https://cnasqbfrzmwdnlqzwsox.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNuYXNxYmZyem13ZG5scXp3c294Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4NjM2MDcsImV4cCI6MjA5MDQzOTYwN30.XyjzE8IJmDpp9xxW0X860gaCyu62ZK8v3hpfxZl37Z0';
+const DASHBOARD_PASSWORD = 'Daybreak2024!';
+
+// ============================================
+// STATE
+// ============================================
+let stores = [];
+let storeAliases = {};
+let allInvoices = [];
+let filteredInvoices = [];
+let selectedStores = new Set();
+let docTypeFilter = 'all';
+let sortKey = 'due_date';
+let sortAsc = true;
+
+// ============================================
+// AUTH
+// ============================================
+function doLogin() {
+  const pw = document.getElementById('pw-input').value;
+  const btn = document.getElementById('login-btn');
+  btn.disabled = true;
+  btn.textContent = 'Checking...';
+  setTimeout(() => {
+    if (pw === DASHBOARD_PASSWORD) {
+      document.getElementById('login-screen').style.display = 'none';
+      document.getElementById('app').style.display = 'block';
+      initApp();
+    } else {
+      document.getElementById('login-error').style.display = 'block';
+      document.getElementById('pw-input').value = '';
+      btn.disabled = false;
+      btn.textContent = 'Access Dashboard →';
+    }
+  }, 400);
+}
+
+// ============================================
+// INIT
+// ============================================
+async function initApp() {
+  await loadStores();
+  updateBandDates();
+  await loadInvoices();
+}
+
+async function supaFetch(path, options = {}) {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
+    headers: {
+      'apikey': SUPABASE_KEY,
+      'Authorization': `Bearer ${SUPABASE_KEY}`,
+      'Content-Type': 'application/json',
+      'Prefer': 'return=representation',
+      ...options.headers
+    },
+    ...options
+  });
+  if (!res.ok) { const t = await res.text(); throw new Error(t); }
+  const txt = await res.text();
+  return txt ? JSON.parse(txt) : null;
+}
+
+async function loadStores() {
+  stores = await supaFetch('stores?select=id,name,region&order=name');
+  stores.forEach(s => { selectedStores.add(s.id); });
+  const aliases = await supaFetch('store_aliases?select=store_id,alias,alias_type');
+  storeAliases = {};
+  aliases.forEach(a => {
+    if (!storeAliases[a.store_id]) storeAliases[a.store_id] = [];
+    storeAliases[a.store_id].push(a);
+  });
+  renderStoreChips();
+}
+
+function renderStoreChips() {
+  const grid = document.getElementById('stores-grid');
+  grid.innerHTML = '';
+  stores.forEach(s => {
+    const chip = document.createElement('div');
+    chip.className = 'store-chip selected';
+    chip.dataset.id = s.id;
+    chip.textContent = `${s.name} (${s.region})`;
+    chip.onclick = () => toggleStore(s.id, chip);
+    grid.appendChild(chip);
+  });
+  updateSelectedLabel();
+}
+
+function toggleStore(id, chip) {
+  if (selectedStores.has(id)) {
+    selectedStores.delete(id);
+    chip.classList.remove('selected');
+  } else {
+    selectedStores.add(id);
+    chip.classList.add('selected');
+  }
+  updateSelectedLabel();
+  applyFilters();
+}
+
+function selectAllStores() {
+  stores.forEach(s => selectedStores.add(s.id));
+  document.querySelectorAll('.store-chip').forEach(c => c.classList.add('selected'));
+  updateSelectedLabel();
+  applyFilters();
+}
+
+function clearStores() {
+  selectedStores.clear();
+  document.querySelectorAll('.store-chip').forEach(c => c.classList.remove('selected'));
+  updateSelectedLabel();
+  applyFilters();
+}
+
+function updateSelectedLabel() {
+  const el = document.getElementById('selected-stores-label');
+  if (selectedStores.size === stores.length) el.textContent = 'All stores selected';
+  else if (selectedStores.size === 0) el.textContent = 'No stores selected';
+  else el.textContent = `${selectedStores.size} of ${stores.length} stores selected`;
+}
+
+// ============================================
+// DATES
+// ============================================
+function updateBandDates() {
+  const now = new Date();
+  const fmt = d => d.toLocaleDateString('en-IE', { day:'numeric', month:'short' });
+  const add = (d, n) => { const r = new Date(d); r.setDate(r.getDate()+n); return r; };
+  document.getElementById('band1-dates').textContent = `${fmt(now)} → ${fmt(add(now,27))}`;
+  document.getElementById('band2-dates').textContent = `${fmt(add(now,28))} → ${fmt(add(now,55))}`;
+  document.getElementById('band3-dates').textContent = `${fmt(add(now,56))} → ${fmt(add(now,83))}`;
+}
+
+function getWeekBand(dueDateStr) {
+  if (!dueDateStr) return null;
+  const due = new Date(dueDateStr);
+  const now = new Date(); now.setHours(0,0,0,0);
+  const diff = Math.floor((due - now) / 86400000);
+  if (diff >= 0 && diff < 28) return '1-4';
+  if (diff >= 28 && diff < 56) return '5-8';
+  if (diff >= 56 && diff < 84) return '9-12';
+  return 'other';
+}
+
+// ============================================
+// LOAD INVOICES
+// ============================================
+async function loadInvoices() {
+  try {
+    const data = await supaFetch(
+      'cashflow_invoices?select=id,store_id,supplier,invoice_number,amount,credit_amount,due_date,issue_date,document_type,email_subject,store_match_confidence,store_match_reason,parsed_at&is_duplicate=eq.false&order=due_date'
+    );
+    allInvoices = (data || []).map(inv => ({
+      ...inv,
+      net: (parseFloat(inv.amount || 0) - parseFloat(inv.credit_amount || 0)),
+      week_band: getWeekBand(inv.due_date),
+      store_name: (stores.find(s => s.id === inv.store_id) || {}).name || 'Unknown'
+    }));
+    if (allInvoices.length > 0) {
+      const lastSync = new Date(Math.max(...allInvoices.map(i => new Date(i.parsed_at))));
+      document.getElementById('last-sync-text').textContent = `Last sync: ${lastSync.toLocaleDateString('en-IE')} ${lastSync.toLocaleTimeString('en-IE',{hour:'2-digit',minute:'2-digit'})}`;
+    }
+    applyFilters();
+  } catch(e) {
+    console.error(e);
+    allInvoices = [];
+    applyFilters();
+  }
+}
+
+// ============================================
+// FILTERS & RENDER
+// ============================================
+function applyFilters() {
+  const search = (document.getElementById('search-box')||{}).value?.toLowerCase() || '';
+  filteredInvoices = allInvoices.filter(inv => {
+    if (!selectedStores.has(inv.store_id)) return false;
+    if (docTypeFilter !== 'all' && inv.document_type !== docTypeFilter) return false;
+    if (search) {
+      const haystack = `${inv.supplier} ${inv.invoice_number} ${inv.store_name} ${inv.email_subject}`.toLowerCase();
+      if (!haystack.includes(search)) return false;
+    }
+    return true;
+  });
+  sortInvoices();
+  renderBands();
+  renderTable();
+}
+
+function applyTableFilters() { applyFilters(); }
+
+function setDocFilter(type, btn) {
+  docTypeFilter = type;
+  document.querySelectorAll('.doc-type-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  applyFilters();
+}
+
+function sortTable(key) {
+  if (sortKey === key) sortAsc = !sortAsc;
+  else { sortKey = key; sortAsc = true; }
+  document.querySelectorAll('thead th').forEach(th => th.classList.remove('sorted'));
+  const headers = ['store_name','supplier','invoice_number','document_type','due_date','week_band','amount','credit_amount','net'];
+  const idx = headers.indexOf(key);
+  if (idx >= 0) document.querySelectorAll('thead th')[idx]?.classList.add('sorted');
+  sortInvoices();
+  renderTable();
+}
+
+function sortInvoices() {
+  filteredInvoices.sort((a,b) => {
+    let va = a[sortKey], vb = b[sortKey];
+    if (va == null) va = ''; if (vb == null) vb = '';
+    if (typeof va === 'number') return sortAsc ? va-vb : vb-va;
+    return sortAsc ? String(va).localeCompare(String(vb)) : String(vb).localeCompare(String(va));
+  });
+}
+
+function renderBands() {
+  const bands = { '1-4': [], '5-8': [], '9-12': [] };
+  filteredInvoices.forEach(inv => {
+    if (bands[inv.week_band]) bands[inv.week_band].push(inv);
+  });
+  ['1-4','5-8','9-12'].forEach((band, i) => {
+    const n = i+1;
+    const items = bands[band];
+    const total = items.reduce((s,inv) => s + inv.net, 0);
+    const suppliers = new Set(items.map(i => i.supplier).filter(Boolean)).size;
+    document.getElementById(`band${n}-amount`).textContent = fmtEuro(total);
+    document.getElementById(`band${n}-count`).textContent = items.length;
+    document.getElementById(`band${n}-suppliers`).textContent = suppliers;
+  });
+}
+
+function renderTable() {
+  const tbody = document.getElementById('invoice-tbody');
+  if (filteredInvoices.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="10">
+      <div class="empty-state">
+        <div class="empty-icon">📭</div>
+        <h3>No invoices found</h3>
+        <p>Sync Gmail to pull in supplier emails, or adjust your store/type filters.</p>
+        <button class="btn-sm accent" onclick="startSync()">⚡ Import Data</button>
+      </div>
+    </td></tr>`;
+    document.getElementById('table-count').textContent = '0 records';
+    document.getElementById('table-total').textContent = '';
+    return;
+  }
+  let totalNet = 0;
+  tbody.innerHTML = filteredInvoices.map(inv => {
+    const net = inv.net;
+    totalNet += net;
+    const band = inv.week_band;
+    const bandCls = band === '1-4' ? 'week-1-4' : band === '5-8' ? 'week-5-8' : band === '9-12' ? 'week-9-12' : 'week-other';
+    const bandLabel = band === 'other' || !band ? 'Beyond W12' : `W${band}`;
+    const conf = inv.store_match_confidence || 'high';
+    const confIcon = conf === 'high' ? '✅' : conf === 'medium' ? '⚠️' : conf === 'low' ? '❗' : '❓';
+    return `<tr>
+      <td><strong>${escHtml(inv.store_name)}</strong></td>
+      <td>${escHtml(inv.supplier || '—')}</td>
+      <td style="font-family:'DM Mono',monospace;font-size:11px;">${escHtml(inv.invoice_number || '—')}</td>
+      <td><span class="badge badge-${inv.document_type || 'invoice'}">${(inv.document_type||'invoice').replace('_',' ')}</span></td>
+      <td style="font-family:'DM Mono',monospace;">${inv.due_date ? fmtDate(inv.due_date) : '—'}</td>
+      <td><span class="week-badge ${bandCls}">${bandLabel}</span></td>
+      <td class="td-amount" style="text-align:right;">${fmtEuro(inv.amount)}</td>
+      <td class="td-amount td-credit" style="text-align:right;">${parseFloat(inv.credit_amount||0) > 0 ? '-'+fmtEuro(inv.credit_amount) : '—'}</td>
+      <td class="td-amount ${net < 0 ? 'td-credit' : ''}" style="text-align:right;font-weight:700;">${fmtEuro(net)}</td>
+      <td title="${escHtml(inv.store_match_reason||'')}" class="confidence-${conf}">${confIcon} ${conf}</td>
+    </tr>`;
+  }).join('');
+  document.getElementById('table-count').textContent = `${filteredInvoices.length} records shown`;
+  document.getElementById('table-total').textContent = `Total Net Due: ${fmtEuro(totalNet)}`;
+}
+
+// ============================================
+// GMAIL SYNC — calls secure serverless backend
+// ============================================
+// ── PASTE SYNC ── called when user pastes JSON from Claude
+async function pasteSync() {
+  const raw = document.getElementById('paste-json').value.trim();
+  if (!raw) return;
+  const panel = document.getElementById('sync-panel');
+  panel.classList.add('visible');
+  document.getElementById('sync-title').textContent = 'Processing pasted data...';
+  document.getElementById('sync-subtitle').textContent = 'Saving invoices to database';
+  const log = document.getElementById('sync-log');
+  log.innerHTML = '';
+  function addLog(msg, cls='') {
+    const line = document.createElement('div');
+    line.className = `sync-log-line ${cls}`;
+    line.textContent = `[${new Date().toLocaleTimeString('en-IE')}] ${msg}`;
+    log.appendChild(line);
+    log.scrollTop = log.scrollHeight;
+  }
+  function setProgress(pct) { document.getElementById('sync-bar').style.width = pct + '%'; }
+
+  let parsed;
+  try {
+    parsed = JSON.parse(raw);
+    if (!parsed.invoices) throw new Error('Missing "invoices" array in JSON');
+  } catch(e) {
+    addLog('Invalid JSON: ' + e.message, 'err');
+    document.getElementById('sync-title').textContent = 'Invalid data';
+    return;
+  }
+  setProgress(20);
+  addLog(`Found ${parsed.invoices.length} records to process...`);
+  const existing = await supaFetch('cashflow_invoices?select=dedup_fingerprint&is_duplicate=eq.false');
+  const prints = new Set((existing||[]).map(e=>e.dedup_fingerprint).filter(Boolean));
+  setProgress(40);
+  let inserted = 0, dupes = 0;
+  for (const inv of parsed.invoices) {
+    const fp = inv.dedup_fingerprint || `${(inv.supplier||'').toLowerCase().replace(/\s+/g,'_')}_${inv.amount}_${inv.due_date}`;
+    if (prints.has(fp)) { dupes++; continue; }
+    try {
+      await supaFetch('cashflow_invoices', { method: 'POST', body: JSON.stringify({
+        store_id: inv.store_id||null, supplier: inv.supplier||null,
+        invoice_number: inv.invoice_number||null, amount: parseFloat(inv.amount)||0,
+        credit_amount: parseFloat(inv.credit_amount)||0, due_date: inv.due_date||null,
+        issue_date: inv.issue_date||null, document_type: inv.document_type||'invoice',
+        email_id: inv.email_id||null, email_subject: inv.email_subject||null,
+        dedup_fingerprint: fp, store_match_confidence: inv.store_match_confidence||'unknown',
+        store_match_reason: inv.store_match_reason||null, is_duplicate: false
+      })});
+      prints.add(fp); inserted++;
+    } catch(e) { addLog(`Error: ${inv.supplier} - ${e.message}`, 'err'); }
+  }
+  setProgress(100);
+  addLog(`${inserted} new invoices saved. ${dupes} duplicates skipped.`, 'ok');
+  if (parsed.unmatched_emails > 0) addLog(`${parsed.unmatched_emails} emails had no store match.`, 'warn');
+  document.getElementById('sync-title').textContent = 'Import complete';
+  document.getElementById('sync-subtitle').textContent = `${inserted} records added`;
+  document.getElementById('paste-json').value = '';
+  const now = new Date();
+  document.getElementById('last-sync-text').textContent =
+    `Last sync: ${now.toLocaleDateString('en-IE')} ${now.toLocaleTimeString('en-IE',{hour:'2-digit',minute:'2-digit'})}`;
+  if (inserted > 0) await loadInvoices();
+}
+
+function startSync() { document.getElementById('sync-modal').classList.add('open'); }
+function closeSyncModal() { document.getElementById('sync-modal').classList.remove('open'); }
+
+function closeSyncPanel() {
+  document.getElementById('sync-panel').classList.remove('visible');
+}
+
+// ============================================
+// ALIASES MODAL
+// ============================================
+async function showAliases() {
+  document.getElementById('aliases-modal').classList.add('open');
+  const content = document.getElementById('aliases-content');
+  content.innerHTML = '<div style="color:var(--muted);font-size:13px;">Loading...</div>';
+  
+  try {
+    const aliases = await supaFetch('store_aliases?select=id,store_id,alias,alias_type&order=store_id,alias');
+    content.innerHTML = stores.map(store => {
+      const storeAls = aliases.filter(a => a.store_id === store.id);
+      return `<div class="alias-group">
+        <div class="alias-group-name">${store.name} · ${store.region}</div>
+        <div class="alias-list" id="aliases-${store.id}">
+          ${storeAls.map(a => `<span class="alias-tag" title="${a.alias_type}">${escHtml(a.alias)}</span>`).join('')}
+        </div>
+        <div class="add-alias-form">
+          <input type="text" placeholder="Add alias (e.g. old trading name, address...)" id="new-alias-${store.id}">
+          <button class="btn-sm accent" onclick="addAlias(${store.id})">+ Add</button>
+        </div>
+      </div>`;
+    }).join('');
+  } catch(e) {
+    content.innerHTML = `<div style="color:var(--danger)">Error loading aliases: ${e.message}</div>`;
+  }
+}
+
+async function addAlias(storeId) {
+  const input = document.getElementById(`new-alias-${storeId}`);
+  const alias = input.value.trim();
+  if (!alias) return;
+  try {
+    await supaFetch('store_aliases', {
+      method: 'POST',
+      body: JSON.stringify({ store_id: storeId, alias, alias_type: 'name' })
+    });
+    input.value = '';
+    const container = document.getElementById(`aliases-${storeId}`);
+    const tag = document.createElement('span');
+    tag.className = 'alias-tag';
+    tag.textContent = alias;
+    container.appendChild(tag);
+  } catch(e) {
+    alert('Error adding alias: ' + e.message);
+  }
+}
+
+function closeAliases() {
+  document.getElementById('aliases-modal').classList.remove('open');
+}
+
+// ============================================
+// EXPORT
+// ============================================
+function exportCSV() {
+  const headers = ['Store','Supplier','Invoice #','Type','Due Date','Week Band','Amount (€)','Credit (€)','Net Due (€)','Confidence'];
+  const rows = filteredInvoices.map(inv => [
+    inv.store_name, inv.supplier, inv.invoice_number, inv.document_type,
+    inv.due_date, inv.week_band, inv.amount, inv.credit_amount, inv.net.toFixed(2),
+    inv.store_match_confidence
+  ].map(v => `"${(v||'').toString().replace(/"/g,'""')}"`).join(','));
+  const csv = [headers.join(','), ...rows].join('\n');
+  const blob = new Blob([csv], {type:'text/csv'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `sk-retail-cashflow-${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+}
+
+// ============================================
+// HELPERS
+// ============================================
+function fmtEuro(n) {
+  return '€' + (parseFloat(n)||0).toLocaleString('en-IE', {minimumFractionDigits:2, maximumFractionDigits:2});
+}
+function fmtDate(d) {
+  return new Date(d).toLocaleDateString('en-IE', {day:'numeric',month:'short',year:'numeric'});
+}
+function escHtml(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+</script>
+
+<!-- SYNC MODAL -->
+<div id="sync-modal" style="display:none;position:fixed;inset:0;background:#000000b0;z-index:300;align-items:center;justify-content:center;">
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:32px;width:640px;max-width:95vw;max-height:90vh;overflow-y:auto;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+      <div>
+        <h2 style="font-size:18px;font-weight:700;">Import Invoice Data</h2>
+        <p style="font-size:12px;color:var(--muted);margin-top:4px;">100% free — powered by Claude AI in this chat</p>
+      </div>
+      <button class="btn-sm" onclick="closeSyncModal()">✕ Close</button>
+    </div>
+
+    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:18px;margin-bottom:20px;">
+      <div style="font-size:12px;font-weight:700;color:var(--accent);margin-bottom:10px;">HOW TO SYNC — FREE IN 2 STEPS</div>
+      <div style="font-size:12px;color:var(--muted);line-height:1.8;">
+        <b style="color:var(--text);">Step 1:</b> Copy this prompt and send it to Claude (claude.ai) in a new chat where your Gmail is connected:<br><br>
+        <div style="background:#0a0c10;border:1px solid var(--border);border-radius:7px;padding:12px;font-family:'DM Mono',monospace;font-size:11px;color:#9ca3af;position:relative;">
+          <button onclick="copyPrompt()" style="position:absolute;top:8px;right:8px;background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:3px 8px;font-size:10px;color:var(--muted);cursor:pointer;">Copy</button>
+          <span id="sync-prompt-text">Search my Gmail for all supplier invoice, credit note, direct debit and payment emails from the last 90 days for SK Retail Group / Daybreak stores. Use this store identity map to assign each email to the correct store: Store 1=Ballyfermot (Dublin 10, D10), Store 2=Ballymore Eustace (Kildare), Store 3=Cabra (Dublin 7, D07), Store 4=Inchicore (Dublin 8, D08), Store 5=Donore (Dublin), Store 6=Graigcullen (Carlow, Centra Graigcullen), Store 7=Morristown (Kildare), Store 8=Naas (Kildare), Store 9=Oakview (Carlow), Store 10=Tullow (Carlow). Suppliers include Musgrave, S&amp;W Wholesale, O'Reillys, BWG, Payzone, Barry's, Yuno Energy, Water.ie, and others. DEDUPLICATION: if same payment appears in both invoice and DD notification, use invoice only. Return ONLY valid JSON: {"emails_scanned":N,"invoices_found":N,"unmatched_emails":N,"invoices":[{"supplier":"","invoice_number":"","amount":0,"credit_amount":0,"due_date":"YYYY-MM-DD","issue_date":"YYYY-MM-DD","document_type":"invoice","store_id":N,"store_name":"","store_match_confidence":"high","store_match_reason":"","email_subject":"","email_id":"","dedup_fingerprint":"supplier_amount_duedate"}]}</span>
+        </div>
+        <br><b style="color:var(--text);">Step 2:</b> Copy Claude's JSON response and paste it below, then click Import.
+      </div>
+    </div>
+
+    <div style="margin-bottom:16px;">
+      <label style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:8px;">Paste Claude's JSON Response</label>
+      <textarea id="paste-json" rows="8" placeholder='{"emails_scanned": 45, "invoices_found": 12, "invoices": [...]}' style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px;font-family:DM Mono,monospace;font-size:11px;color:var(--text);outline:none;resize:vertical;"></textarea>
+    </div>
+    <button class="btn-primary" onclick="pasteSync()">⚡ Import to Dashboard</button>
+  </div>
+</div>
+
+<script>
+function copyPrompt() {
+  const t = document.getElementById('sync-prompt-text').textContent;
+  navigator.clipboard.writeText(t).then(() => {
+    const b = event.target; b.textContent = 'Copied!';
+    setTimeout(() => b.textContent = 'Copy', 1500);
+  });
+}
+document.getElementById('sync-modal').style.display = 'flex';
+document.getElementById('sync-modal').style.display = 'none';
+</script>
+
+</body>
+</html>
