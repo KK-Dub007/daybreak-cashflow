@@ -598,6 +598,7 @@
               <th onclick="sortTable('credit_amount')" style="text-align:right">Credit <span class="sort-icon">↕</span></th>
               <th onclick="sortTable('net')" style="text-align:right">Net Due <span class="sort-icon">↕</span></th>
               <th>Confidence</th>
+              <th>Email</th>
             </tr>
           </thead>
           <tbody id="invoice-tbody"></tbody>
@@ -817,7 +818,7 @@ function clearDateRange() {
 async function loadInvoices() {
   try {
     const data = await supaFetch(
-      'cashflow_invoices?select=id,store_id,supplier,invoice_number,amount,credit_amount,due_date,issue_date,document_type,email_subject,store_match_confidence,store_match_reason,created_at&is_duplicate=eq.false&order=due_date'
+      'cashflow_invoices?select=id,store_id,supplier,invoice_number,amount,credit_amount,due_date,issue_date,document_type,email_subject,store_match_confidence,store_match_reason,created_at,email_id&is_duplicate=eq.false&document_type=neq.statement&order=due_date'
     );
     allInvoices = (data || []).map(inv => ({
       ...inv,
@@ -959,6 +960,7 @@ function renderTable() {
       <td class="td-amount td-credit" style="text-align:right;">${parseFloat(inv.credit_amount||0) > 0 ? '-'+fmtEuro(inv.credit_amount) : '—'}</td>
       <td class="td-amount ${net < 0 ? 'td-credit' : ''}" style="text-align:right;font-weight:700;">${fmtEuro(net)}</td>
       <td title="${escHtml(inv.store_match_reason||'')}" class="confidence-${conf}">${confIcon} ${conf}</td>
+      <td>${inv.email_id ? '<a href="https://mail.google.com/mail/u/0/#all/'+inv.email_id+'" target="_blank" style="color:var(--accent);font-size:11px;">📧</a>' : '—'}</td>
     </tr>`;
   }).join('');
   document.getElementById('table-count').textContent = `${filteredInvoices.length} records shown`;
