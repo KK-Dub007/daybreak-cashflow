@@ -660,7 +660,7 @@ async function supaFetch(path, options = {}) {
 
 async function loadStores() {
   stores = await supaFetch('stores?select=id,name,region&order=name');
-  stores.forEach(s => { selectedStores.add(s.id); });
+  stores.forEach(s => { selectedStores.add(String(s.id)); });
   const aliases = await supaFetch('store_aliases?select=store_id,alias,alias_type');
   storeAliases = {};
   aliases.forEach(a => {
@@ -685,11 +685,11 @@ function renderStoreChips() {
 }
 
 function toggleStore(id, chip) {
-  if (selectedStores.has(id)) {
-    selectedStores.delete(id);
+  if (selectedStores.has(String(id))) {
+    selectedStores.delete(String(id));
     chip.classList.remove('selected');
   } else {
-    selectedStores.add(id);
+    selectedStores.add(String(id));
     chip.classList.add('selected');
   }
   updateSelectedLabel();
@@ -697,7 +697,7 @@ function toggleStore(id, chip) {
 }
 
 function selectAllStores() {
-  stores.forEach(s => selectedStores.add(s.id));
+  stores.forEach(s => selectedStores.add(String(s.id)));
   document.querySelectorAll('.store-chip').forEach(c => c.classList.add('selected'));
   updateSelectedLabel();
   applyFilters();
@@ -752,7 +752,7 @@ async function loadInvoices() {
       ...inv,
       net: (parseFloat(inv.amount || 0) - parseFloat(inv.credit_amount || 0)),
       week_band: getWeekBand(inv.due_date),
-      store_name: (stores.find(s => s.id === inv.store_id) || {}).name || 'Unknown'
+      store_name: (stores.find(s => String(s.id) === String(inv.store_id)) || {}).name || 'Unknown'
     }));
     if (allInvoices.length > 0) {
       const lastSync = new Date(Math.max(...allInvoices.map(i => new Date(i.parsed_at))));
@@ -772,7 +772,7 @@ async function loadInvoices() {
 function applyFilters() {
   const search = (document.getElementById('search-box')||{}).value?.toLowerCase() || '';
   filteredInvoices = allInvoices.filter(inv => {
-    if (!selectedStores.has(inv.store_id)) return false;
+    if (inv.store_id !== null && !selectedStores.has(String(inv.store_id))) return false;
     if (docTypeFilter !== 'all' && inv.document_type !== docTypeFilter) return false;
     if (search) {
       const haystack = `${inv.supplier} ${inv.invoice_number} ${inv.store_name} ${inv.email_subject}`.toLowerCase();
