@@ -156,6 +156,7 @@
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
+    min-height: 36px;
   }
   .store-chip {
     padding: 6px 14px;
@@ -746,7 +747,7 @@ function getWeekBand(dueDateStr) {
 async function loadInvoices() {
   try {
     const data = await supaFetch(
-      'cashflow_invoices?select=id,store_id,supplier,invoice_number,amount,credit_amount,due_date,issue_date,document_type,email_subject,store_match_confidence,store_match_reason,parsed_at&is_duplicate=eq.false&order=due_date'
+      'cashflow_invoices?select=id,store_id,supplier,invoice_number,amount,credit_amount,due_date,issue_date,document_type,email_subject,store_match_confidence,store_match_reason,created_at&is_duplicate=eq.false&order=due_date'
     );
     allInvoices = (data || []).map(inv => ({
       ...inv,
@@ -755,7 +756,7 @@ async function loadInvoices() {
       store_name: (stores.find(s => String(s.id) === String(inv.store_id)) || {}).name || 'Unknown'
     }));
     if (allInvoices.length > 0) {
-      const lastSync = new Date(Math.max(...allInvoices.map(i => new Date(i.parsed_at))));
+      const lastSync = new Date(Math.max(...allInvoices.map(i => new Date(i.created_at || Date.now()))));
       document.getElementById('last-sync-text').textContent = `Last sync: ${lastSync.toLocaleDateString('en-IE')} ${lastSync.toLocaleTimeString('en-IE',{hour:'2-digit',minute:'2-digit'})}`;
     }
     applyFilters();
