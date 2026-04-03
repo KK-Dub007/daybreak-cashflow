@@ -441,8 +441,8 @@
 </head>
 <body>
 
-<!-- LOGIN -->
-<div id="login-screen">
+<!-- LOGIN (disabled) -->
+<div id="login-screen" style="display:none!important;">
   <div class="login-box">
     <div class="login-logo">
       <div class="login-logo-icon">📊</div>
@@ -576,10 +576,10 @@
         <div class="table-controls">
           <input type="text" class="search-input" id="search-box" placeholder="Search supplier, invoice #..." oninput="applyTableFilters()">
           <div class="doc-type-filter">
-            <button class="doc-type-btn active" onclick="setDocFilter('all',this)">All</button>
-            <button class="doc-type-btn" onclick="setDocFilter('invoice',this)">Invoices</button>
+            <button class="doc-type-btn active" onclick="setDocFilter('invoices_only',this)">Invoices</button>
+            <button class="doc-type-btn" onclick="setDocFilter('dd_only',this)">Direct Debits</button>
+            <button class="doc-type-btn" onclick="setDocFilter('both',this)">Both (deduped)</button>
             <button class="doc-type-btn" onclick="setDocFilter('credit_note',this)">Credits</button>
-            <button class="doc-type-btn" onclick="setDocFilter('dd_notification',this)">DDs</button>
           </div>
           <button class="btn-sm" onclick="exportCSV()">⬇️ Export CSV</button>
         </div>
@@ -641,13 +641,17 @@ let storeAliases = {};
 let allInvoices = [];
 let filteredInvoices = [];
 let selectedStores = new Set();
-let docTypeFilter = 'all';
+let docTypeFilter = 'invoices_only';
 let sortKey = 'due_date';
 let sortAsc = true;
 
-// ============================================
-// AUTH
-// ============================================
+// ── AUTO INIT (no login required) ──
+window.addEventListener('DOMContentLoaded', function() {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  initApp();
+});
+
 function doLogin() {
   const pw = document.getElementById('pw-input').value;
   const btn = document.getElementById('login-btn');
@@ -849,7 +853,17 @@ function applyFilters() {
 
   filteredInvoices = allInvoices.filter(inv => {
     if (inv.store_id !== null && !selectedStores.has(String(inv.store_id))) return false;
-    if (docTypeFilter !== 'all' && inv.document_type !== docTypeFilter) return false;
+    // Doc type filter
+    if (docTypeFilter === 'invoices_only') {
+      if (inv.document_type !== 'invoice' && inv.document_type !== 'credit_note') return false;
+    } else if (docTypeFilter === 'dd_only') {
+      if (inv.document_type !== 'dd_notification') return false;
+    } else if (docTypeFilter === 'both') {
+      // Show all except pure statements, but deduplicate: prefer invoice over DD
+      if (inv.document_type === 'statement') return false;
+    } else if (docTypeFilter === 'credit_note') {
+      if (inv.document_type !== 'credit_note') return false;
+    }
     if (search) {
       const haystack = `${inv.supplier} ${inv.invoice_number} ${inv.store_name} ${inv.email_subject}`.toLowerCase();
       if (!haystack.includes(search)) return false;
@@ -864,6 +878,19 @@ function applyFilters() {
     }
     return true;
   });
+  // Dedup: when showing 'both', if same supplier+amount has both invoice and DD, hide the DD
+  if (docTypeFilter === 'both') {
+    const invoiceKeys = new Set(
+      filteredInvoices
+        .filter(i => i.document_type === 'invoice')
+        .map(i => (i.supplier||'') + '_' + i.amount + '_' + i.store_id)
+    );
+    filteredInvoices = filteredInvoices.filter(inv => {
+      if (inv.document_type !== 'dd_notification') return true;
+      const key = (inv.supplier||'') + '_' + inv.amount + '_' + inv.store_id;
+      return !invoiceKeys.has(key); // hide DD if matching invoice exists
+    });
+  }
   sortInvoices();
   renderBands();
   renderTable();
