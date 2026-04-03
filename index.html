@@ -506,11 +506,34 @@
       </div>
     </div>
 
-    <!-- CASHFLOW BANDS -->
-    <div class="bands-grid">
+    <!-- DATE RANGE + DAY BANDS -->
+    <div class="filters-section" style="margin-bottom:16px;">
+      <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+        <div>
+          <label style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:6px;">Due Date Range</label>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <input type="date" id="date-from" style="background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:7px 10px;font-size:12px;color:var(--text);outline:none;" onchange="applyFilters()">
+            <span style="color:var(--muted);font-size:12px;">to</span>
+            <input type="date" id="date-to" style="background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:7px 10px;font-size:12px;color:var(--text);outline:none;" onchange="applyFilters()">
+            <button class="btn-sm" onclick="clearDateRange()">Clear</button>
+          </div>
+        </div>
+        <div>
+          <label style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:6px;">Quick Filter</label>
+          <div style="display:flex;gap:6px;">
+            <button class="btn-sm" onclick="setDays(7)" id="days-7">Next 7 days</button>
+            <button class="btn-sm" onclick="setDays(14)" id="days-14">14 days</button>
+            <button class="btn-sm" onclick="setDays(21)" id="days-21">21 days</button>
+            <button class="btn-sm" onclick="setDays(28)" id="days-28">28 days</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="bands-grid" style="grid-template-columns:repeat(4,1fr);">
       <div class="band-card w1-4">
-        <div class="band-label">⚠️ Weeks 1–4</div>
-        <div class="band-subtitle" id="band1-dates">Loading...</div>
+        <div class="band-label">⚡ Next 7 Days</div>
+        <div class="band-subtitle" id="band1-dates"></div>
         <div class="band-amount" id="band1-amount">€0.00</div>
         <div class="band-meta">
           <div class="band-meta-item"><span id="band1-count">0</span> invoices</div>
@@ -518,8 +541,8 @@
         </div>
       </div>
       <div class="band-card w5-8">
-        <div class="band-label">📅 Weeks 5–8</div>
-        <div class="band-subtitle" id="band2-dates">Loading...</div>
+        <div class="band-label">📅 Next 14 Days</div>
+        <div class="band-subtitle" id="band2-dates"></div>
         <div class="band-amount" id="band2-amount">€0.00</div>
         <div class="band-meta">
           <div class="band-meta-item"><span id="band2-count">0</span> invoices</div>
@@ -527,12 +550,21 @@
         </div>
       </div>
       <div class="band-card w9-12">
-        <div class="band-label">🔮 Weeks 9–12</div>
-        <div class="band-subtitle" id="band3-dates">Loading...</div>
+        <div class="band-label">🗓️ Next 21 Days</div>
+        <div class="band-subtitle" id="band3-dates"></div>
         <div class="band-amount" id="band3-amount">€0.00</div>
         <div class="band-meta">
           <div class="band-meta-item"><span id="band3-count">0</span> invoices</div>
           <div class="band-meta-item"><span id="band3-suppliers">0</span> suppliers</div>
+        </div>
+      </div>
+      <div class="band-card" style="border-top:3px solid #8b5cf6;">
+        <div class="band-label" style="color:#8b5cf6;">🔮 Next 28 Days</div>
+        <div class="band-subtitle" id="band4-dates"></div>
+        <div class="band-amount" id="band4-amount">€0.00</div>
+        <div class="band-meta">
+          <div class="band-meta-item"><span id="band4-count">0</span> invoices</div>
+          <div class="band-meta-item"><span id="band4-suppliers">0</span> suppliers</div>
         </div>
       </div>
     </div>
@@ -739,23 +771,44 @@ function updateSelectedLabel() {
 // DATES
 // ============================================
 function updateBandDates() {
-  const now = new Date();
+  const now = new Date(); now.setHours(0,0,0,0);
   const fmt = d => d.toLocaleDateString('en-IE', { day:'numeric', month:'short' });
   const add = (d, n) => { const r = new Date(d); r.setDate(r.getDate()+n); return r; };
-  document.getElementById('band1-dates').textContent = `${fmt(now)} → ${fmt(add(now,27))}`;
-  document.getElementById('band2-dates').textContent = `${fmt(add(now,28))} → ${fmt(add(now,55))}`;
-  document.getElementById('band3-dates').textContent = `${fmt(add(now,56))} → ${fmt(add(now,83))}`;
+  document.getElementById('band1-dates').textContent = `${fmt(now)} → ${fmt(add(now,6))}`;
+  document.getElementById('band2-dates').textContent = `${fmt(now)} → ${fmt(add(now,13))}`;
+  document.getElementById('band3-dates').textContent = `${fmt(now)} → ${fmt(add(now,20))}`;
+  document.getElementById('band4-dates').textContent = `${fmt(now)} → ${fmt(add(now,27))}`;
 }
 
 function getWeekBand(dueDateStr) {
-  if (!dueDateStr) return null;
+  if (!dueDateStr) return 'other';
   const due = new Date(dueDateStr);
   const now = new Date(); now.setHours(0,0,0,0);
   const diff = Math.floor((due - now) / 86400000);
-  if (diff >= 0 && diff < 28) return '1-4';
-  if (diff >= 28 && diff < 56) return '5-8';
-  if (diff >= 56 && diff < 84) return '9-12';
+  if (diff < 0) return 'past';
+  if (diff < 7)  return '7';
+  if (diff < 14) return '14';
+  if (diff < 21) return '21';
+  if (diff < 28) return '28';
   return 'other';
+}
+
+function setDays(n) {
+  const today = new Date(); today.setHours(0,0,0,0);
+  const end = new Date(today); end.setDate(today.getDate() + n);
+  document.getElementById('date-from').value = today.toISOString().slice(0,10);
+  document.getElementById('date-to').value = end.toISOString().slice(0,10);
+  document.querySelectorAll('[id^="days-"]').forEach(b => b.classList.remove('accent'));
+  const btn = document.getElementById('days-' + n);
+  if (btn) btn.classList.add('accent');
+  applyFilters();
+}
+
+function clearDateRange() {
+  document.getElementById('date-from').value = '';
+  document.getElementById('date-to').value = '';
+  document.querySelectorAll('[id^="days-"]').forEach(b => b.classList.remove('accent'));
+  applyFilters();
 }
 
 // ============================================
@@ -789,12 +842,24 @@ async function loadInvoices() {
 // ============================================
 function applyFilters() {
   const search = (document.getElementById('search-box')||{}).value?.toLowerCase() || '';
+  const fromVal = document.getElementById('date-from')?.value;
+  const toVal = document.getElementById('date-to')?.value;
+  const today = new Date(); today.setHours(0,0,0,0);
+
   filteredInvoices = allInvoices.filter(inv => {
     if (inv.store_id !== null && !selectedStores.has(String(inv.store_id))) return false;
     if (docTypeFilter !== 'all' && inv.document_type !== docTypeFilter) return false;
     if (search) {
       const haystack = `${inv.supplier} ${inv.invoice_number} ${inv.store_name} ${inv.email_subject}`.toLowerCase();
       if (!haystack.includes(search)) return false;
+    }
+    // Date range filter
+    if (inv.due_date) {
+      const due = new Date(inv.due_date); due.setHours(0,0,0,0);
+      if (fromVal && due < new Date(fromVal)) return false;
+      if (toVal && due > new Date(toVal)) return false;
+      // If no date range set, only show future invoices
+      if (!fromVal && !toVal && due < today) return false;
     }
     return true;
   });
@@ -833,18 +898,29 @@ function sortInvoices() {
 }
 
 function renderBands() {
-  const bands = { '1-4': [], '5-8': [], '9-12': [] };
-  filteredInvoices.forEach(inv => {
-    if (bands[inv.week_band]) bands[inv.week_band].push(inv);
+  const now = new Date(); now.setHours(0,0,0,0);
+  // Bands are cumulative: 7, 14, 21, 28 days from today — future only
+  const b = {7:[], 14:[], 21:[], 28:[]};
+  allInvoices.filter(inv => {
+    if (!inv.due_date) return false;
+    const due = new Date(inv.due_date); due.setHours(0,0,0,0);
+    return due >= now; // future only
+  }).forEach(inv => {
+    const diff = Math.floor((new Date(inv.due_date) - now) / 86400000);
+    if (diff < 7)  b[7].push(inv);
+    if (diff < 14) b[14].push(inv);
+    if (diff < 21) b[21].push(inv);
+    if (diff < 28) b[28].push(inv);
   });
-  ['1-4','5-8','9-12'].forEach((band, i) => {
+  [7,14,21,28].forEach((days, i) => {
     const n = i+1;
-    const items = bands[band];
-    const total = items.reduce((s,inv) => s + inv.net, 0);
-    const suppliers = new Set(items.map(i => i.supplier).filter(Boolean)).size;
+    const items = b[days];
+    // Filter by selected stores
+    const filtered = items.filter(inv => inv.store_id === null || selectedStores.has(String(inv.store_id)));
+    const total = filtered.reduce((s,inv) => s + inv.net, 0);
     document.getElementById(`band${n}-amount`).textContent = fmtEuro(total);
-    document.getElementById(`band${n}-count`).textContent = items.length;
-    document.getElementById(`band${n}-suppliers`).textContent = suppliers;
+    document.getElementById(`band${n}-count`).textContent = filtered.length;
+    document.getElementById(`band${n}-suppliers`).textContent = new Set(filtered.map(i => i.supplier).filter(Boolean)).size;
   });
 }
 
